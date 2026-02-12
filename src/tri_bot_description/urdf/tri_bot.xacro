@@ -1,0 +1,101 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="tri_bot">
+
+  <!-- The value indicates the length in meter -->
+  <xacro:property name="body_length" value="0.16" />
+  <xacro:property name="body_width" value="0.075" />
+  <xacro:property name="single_wing_span" value="0.25" />
+  <xacro:property name="tail_length" value="0.2" />
+  <xacro:property name="nose_length" value="0.08" />
+
+  <material name="blue">
+    <color rgba="0 0 0.8 1"/>
+  </material>
+  <material name="white">
+    <color rgba="1 1 1 1"/>
+  </material>
+  <material name="red">
+    <color rgba="0.8 0 0 1"/>
+  </material>
+
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <box size="${body_length} ${body_width} ${body_width}"/>
+      </geometry>
+      <material name="white"/>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="${body_length} ${body_width} ${body_width}"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="left_wing">
+    <visual>
+      <geometry>
+        <box size="0.1 ${single_wing_span} 0.02"/>
+      </geometry>
+      <origin xyz="0 ${single_wing_span/2} 0" rpy="0 0 0"/>
+      <material name="blue"/>
+    </visual>
+  </link>
+
+  <joint name="left_wing_fold_joint" type="revolute">
+    <parent link="base_link"/>
+    <child link="left_wing"/>
+    <origin xyz="0.05 ${body_width/2} 0"/>
+    <axis xyz="1 0 0"/> <limit lower="-1.57" upper="0" effort="10" velocity="1"/>
+  </joint>
+
+  <link name="right_wing">
+    <visual>
+      <geometry>
+        <box size="0.1 ${single_wing_span} 0.02"/>
+      </geometry>
+      <origin xyz="0 -${single_wing_span/2} 0" rpy="0 0 0"/>
+      <material name="blue"/>
+    </visual>
+  </link>
+
+  <joint name="right_wing_fold_joint" type="revolute">
+    <parent link="base_link"/>
+    <child link="right_wing"/>
+    <origin xyz="0.05 -${body_width/2} 0"/>
+    <axis xyz="1 0 0"/> <limit lower="0" upper="1.57" effort="10" velocity="1"/>
+  </joint>
+
+  <link name="tail_mount">
+    <visual>
+      <geometry>
+        <cylinder length="${tail_length}" radius="0.05"/>
+      </geometry>
+      <origin xyz="-${tail_length/2} 0 0" rpy="0 1.57 0"/>
+      <material name="red"/>
+    </visual>
+  </link>
+
+  <joint name="tail_mount_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="tail_mount"/>
+    <origin xyz="-${body_length/2} 0 0"/>
+  </joint>
+
+  <link name="nozzle">
+    <visual>
+      <geometry>
+        <sphere radius="0.06"/>
+      </geometry>
+      <material name="blue"/>
+    </visual>
+  </link>
+
+  <joint name="tvc_pitch_joint" type="revolute">
+    <parent link="tail_mount"/>
+    <child link="nozzle"/>
+    <origin xyz="-${tail_length} 0 0"/>
+    <axis xyz="0 1 0"/> <limit lower="-0.5" upper="0.5" effort="10" velocity="5"/>
+  </joint>
+
+</robot>
