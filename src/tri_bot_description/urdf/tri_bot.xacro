@@ -8,6 +8,12 @@
   <xacro:property name="tail_length" value="0.2" />
   <xacro:property name="nose_length" value="0.08" />
 
+  <xacro:property name="zoom_cam_size" value="0.019" />
+  <xacro:property name="night_cam_size_x" value="0.02" />
+  <xacro:property name="night_cam_size_y" value="0.02" />
+  <xacro:property name="night_cam_size_z" value="0.02854" />
+  <xacro:property name="cam_separation" value="0.04" />
+
   <material name="blue">
     <color rgba="0 0 0.8 1"/>
   </material>
@@ -16,6 +22,9 @@
   </material>
   <material name="red">
     <color rgba="0.8 0 0 1"/>
+  </material>
+  <material name="black">
+    <color rgba="0.1 0.1 0.1 1"/>
   </material>
 
   <link name="base_link">
@@ -31,6 +40,75 @@
       </geometry>
     </collision>
   </link>
+
+  <link name="nose_link">
+    <visual>
+      <geometry>
+        <cone radius="${body_width/2}" length="${nose_length}"/>
+      </geometry>
+      <origin xyz="${nose_length/2} 0 0" rpy="0 1.57 0"/>
+      <material name="blue"/>
+    </visual>
+    <collision>
+      <geometry>
+        <cone radius="${body_width/2}" length="${nose_length}"/>
+      </geometry>
+      <origin xyz="${nose_length/2} 0 0" rpy="0 1.57 0"/>
+    </collision>
+  </link>
+
+  <joint name="nose_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="nose_link"/>
+    <origin xyz="${body_length/2} 0 0"/>
+  </joint>
+
+<link name="camera_night_link">
+    <visual>
+      <geometry>
+        <box size="${night_cam_size_x} ${night_cam_size_y} ${night_cam_size_z}"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+  </link>
+
+  <joint name="camera_night_joint" type="fixed">
+    <parent link="nose_link"/>
+    <child link="camera_night_link"/>
+    <origin xyz="${nose_length*0.8} ${cam_separation/2} 0" rpy="0 0 0"/>
+  </joint>
+  
+  <link name="camera_zoom_link">
+    <visual>
+      <geometry>
+        <cylinder radius="${zoom_cam_size/2}" length="${zoom_cam_size*1.5}"/>
+      </geometry>
+      <origin xyz="0 0 0" rpy="0 1.57 0"/>
+      <material name="black"/>
+    </visual>
+  </link>
+
+  <joint name="camera_zoom_joint" type="fixed">
+    <parent link="nose_link"/>
+    <child link="camera_zoom_link"/>
+    <origin xyz="${nose_length*0.8} -${cam_separation/2} 0" rpy="0 0 0"/>
+  </joint>
+
+  <!-- ROS 2 and cameras use 2 different coordinate systems -->
+  <!-- The 2 optical frames uniform the standard to the one that ROS 2 uses -->
+  <link name="camera_night_optical_frame"/>
+  <joint name="camera_night_optical_joint" type="fixed">
+    <parent link="camera_night_link"/>
+    <child link="camera_night_optical_frame"/>
+    <origin xyz="0 0 0" rpy="-1.57 0 -1.57"/>
+  </joint>
+
+  <link name="camera_zoom_optical_frame"/>
+  <joint name="camera_zoom_optical_joint" type="fixed">
+    <parent link="camera_zoom_link"/>
+    <child link="camera_zoom_optical_frame"/>
+    <origin xyz="0 0 0" rpy="-1.57 0 -1.57"/>
+  </joint>
 
   <link name="left_wing">
     <visual>
