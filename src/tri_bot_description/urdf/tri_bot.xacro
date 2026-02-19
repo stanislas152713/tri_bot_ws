@@ -1,6 +1,38 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="tri_bot">
 
+  <!-- Inertia formulas -->
+  <xacro:macro name="box_inertia" params="m w h d xyz rpy">
+    <inertial>
+      <origin xyz="${xyz}" rpy="${rpy}"/>
+      <mass value="${m}"/>
+      <inertia ixx="${(m/12) * (h*h + d*d)}" ixy="0.0" ixz="0.0"
+               iyy="${(m/12) * (w*w + d*d)}" iyz="0.0"
+               izz="${(m/12) * (w*w + h*h)}"/>
+    </inertial>
+  </xacro:macro>
+
+  <xacro:macro name="cylinder_inertia" params="m r h xyz rpy">
+    <inertial>
+      <origin xyz="${xyz}" rpy="${rpy}"/>
+      <mass value="${m}"/>
+      <inertia ixx="${(m/12) * (3*r*r + h*h)}" ixy = "0.0" ixz = "0.0"
+               iyy="${(m/12) * (3*r*r + h*h)}" iyz = "0.0"
+               izz="${(m/2) * (r*r)}"/>
+    </inertial>
+  </xacro:macro>
+
+  <xacro:macro name="sphere_inertia" params="m r xyz rpy">
+    <inertial>
+      <origin xyz="${xyz}" rpy="${rpy}"/>
+      <mass value="${m}"/>
+      <inertia ixx="${(2/5) * m * (r*r)}" ixy="0.0" ixz="0.0"
+               iyy="${(2/5) * m * (r*r)}" iyz="0.0"
+               izz="${(2/5) * m * (r*r)}"/>
+    </inertial>
+  </xacro:macro>
+
+  <!-- All the values below are approxiamated -->
   <!-- The value indicates the length in meter -->
   <xacro:property name="body_length" value="0.16" />
   <xacro:property name="body_width" value="0.075" />
@@ -39,22 +71,24 @@
         <box size="${body_length} ${body_width} ${body_width}"/>
       </geometry>
     </collision>
+    <xacro:box_inertia m="3" w="${body_length}" h="${body_width}" d="${body_width}" xyz="0 0 0" rpy="0 0 0"/>
   </link>
 
   <link name="nose_link">
     <visual>
       <geometry>
-        <cone radius="${body_width/2}" length="${nose_length}"/>
+        <cylinder radius="${body_width/2}" length="${nose_length}"/>
       </geometry>
       <origin xyz="${nose_length/2} 0 0" rpy="0 1.57 0"/>
       <material name="blue"/>
     </visual>
     <collision>
       <geometry>
-        <cone radius="${body_width/2}" length="${nose_length}"/>
+        <cylinder radius="${body_width/2}" length="${nose_length}"/>
       </geometry>
       <origin xyz="${nose_length/2} 0 0" rpy="0 1.57 0"/>
     </collision>
+    <xacro:cylinder_inertia m="0.1" r="${body_width/2}" h="${nose_length}" xyz="${nose_length/2} 0 0" rpy="0 1.57 0"/>
   </link>
 
   <joint name="nose_joint" type="fixed">
@@ -70,12 +104,14 @@
       </geometry>
       <material name="black"/>
     </visual>
+    <xacro:box_inertia m="0.01" w="${night_cam_size_x}" h="${night_cam_size_y}" d="${night_cam_size_z}" xyz="0 0 0" rpy="0 0 0"/>
   </link>
 
   <joint name="camera_night_joint" type="fixed">
     <parent link="nose_link"/>
     <child link="camera_night_link"/>
     <origin xyz="${nose_length*0.8} ${cam_separation/2} 0" rpy="0 0 0"/>
+    <xacro:cylinder_inertia m="0.01" r="${zoom_cam_size/2}" h="${zoom_cam_size*1.5}" xyz="0 0 0" rpy="0 1.57 0"/>
   </joint>
   
   <link name="camera_zoom_link">
@@ -118,6 +154,7 @@
       <origin xyz="0 ${single_wing_span/2} 0" rpy="0 0 0"/>
       <material name="blue"/>
     </visual>
+    <xacro:box_inertia m="0.05" w="0.1" h="${single_wing_span}" d="0.02" xyz="0 ${single_wing_span/2} 0" rpy="0 0 0"/>
   </link>
 
   <joint name="left_wing_fold_joint" type="revolute">
@@ -135,6 +172,7 @@
       <origin xyz="0 -${single_wing_span/2} 0" rpy="0 0 0"/>
       <material name="blue"/>
     </visual>
+    <xacro:box_inertia m="0.05" w="0.1" h="${single_wing_span}" d="0.02" xyz="0 -${single_wing_span/2} 0" rpy="0 0 0"/>
   </link>
 
   <joint name="right_wing_fold_joint" type="revolute">
@@ -152,6 +190,7 @@
       <origin xyz="-${tail_length/2} 0 0" rpy="0 1.57 0"/>
       <material name="red"/>
     </visual>
+    <xacro:cylinder_inertia m="0.05" r="0.05" h="${tail_length}" xyz="-${tail_length/2} 0 0" rpy="0 1.57 0"/>
   </link>
 
   <joint name="tail_mount_joint" type="fixed">
@@ -167,6 +206,7 @@
       </geometry>
       <material name="blue"/>
     </visual>
+    <xacro:sphere_inertia m="0.05" r="0.06" xyz="0 0 0" rpy="0 0 0"/>
   </link>
 
   <joint name="tvc_pitch_joint" type="revolute">
