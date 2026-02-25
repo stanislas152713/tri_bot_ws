@@ -33,4 +33,9 @@ install(DIRECTORY urdf
   DESTINATION share/${PROJECT_NAME}
 )
 
+# 3. Install the config directory (controllers.yaml for gazebo_ros2_control)
+install(DIRECTORY config
+  DESTINATION share/${PROJECT_NAME}
+)
+
 ament_package()

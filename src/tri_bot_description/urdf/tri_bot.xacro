@@ -376,7 +376,6 @@
       </geometry>
       <origin xyz="0.03 0 0" rpy="0 1.57 0"/>
     </collision>
-    <!-- Inertia: bell is dominant; use cylinder (axis x) for better accuracy than sphere -->
     <xacro:cylinder_inertia m="0.05" r="0.06" h="0.06" xyz="0.03 0 0" rpy="0 1.57 0"/>
   </link>
 
@@ -387,10 +386,10 @@
     <axis xyz="0 0 1"/> <limit lower="-${tvc_range_rad}" upper="${tvc_range_rad}" effort="10" velocity="5"/>
   </joint>
 
-  <!-- ros2_control: expose joint command/state for Gazebo and real hardware -->
+  <!-- ros2_control: expose joint command/state for Gazebo Harmonic (gz_ros2_control) and real hardware -->
   <ros2_control name="TriBotControl" type="system">
     <hardware>
-      <plugin>gazebo_ros2_control/GazeboSystem</plugin>
+      <plugin>gz_ros2_control/GazeboSimSystem</plugin>
     </hardware>
     <joint name="left_wing_fold_joint">
       <command_interface name="position"/>
@@ -414,13 +413,13 @@
     </joint>
   </ros2_control>
 
-  <!-- Gazebo plugin: load ros2_control controller manager and controllers.
-       When launching in Gazebo, the launch file must pass the absolute path to
-       config/controllers.yaml via: controllers_file:=/path/to/controllers.yaml
-       (e.g. from get_package_share_directory), so the plugin can load it. -->
+  <!-- Gazebo Harmonic (gz_ros2_control): load controller manager and controllers.
+       Launch must pass controllers_file:=/path/to/controllers.yaml (e.g. from get_package_share_directory). -->
   <xacro:property name="controllers_file" value=""/>
   <gazebo>
-    <plugin name="gazebo_ros2_control" filename="libgazebo_ros2_control.so">
+    <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+      <robot_param>robot_description</robot_param>
+      <robot_param_node>robot_state_publisher</robot_param_node>
       <parameters>${controllers_file}</parameters>
     </plugin>
   </gazebo>
