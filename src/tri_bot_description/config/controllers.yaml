@@ -1,0 +1,18 @@
+# Controller manager and controllers for tri_bot (ros2_control in Gazebo).
+# Load with: controllers_file pointing to this file from the gazebo_ros2_control plugin.
+controller_manager:
+  ros__parameters:
+    update_rate: 100
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    # Forwards position commands to the four actuated joints (wings + TVC pitch/yaw).
+    position_controller:
+      type: forward_command_controller/ForwardCommandController
+      joints:
+        - left_wing_fold_joint
+        - right_wing_fold_joint
+        - tvc_pitch_joint
+        - tvc_yaw_joint
+      interface_name: position

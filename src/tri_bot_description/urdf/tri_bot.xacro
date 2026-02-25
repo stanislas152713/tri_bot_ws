@@ -32,7 +32,7 @@
     </inertial>
   </xacro:macro>
 
-  <!-- All the values below are approxiamated -->
+  <!-- All the values below are approximated -->
   <!-- The value indicates the length in meter -->
   <xacro:property name="body_length" value="0.16" />
   <xacro:property name="body_width" value="0.075" />
@@ -45,6 +45,16 @@
   <xacro:property name="night_cam_size_y" value="0.02" />
   <xacro:property name="night_cam_size_z" value="0.02854" />
   <xacro:property name="cam_separation" value="0.04" />
+  <xacro:property name="ducted_fan_outer_r" value="0.055" />
+  <xacro:property name="ducted_fan_inner_r" value="0.04" />
+  <xacro:property name="ducted_fan_depth" value="0.03" />
+  <xacro:property name="ducted_fan_z_sep" value="0.06" />
+  <xacro:property name="tail_fin_span" value="0.06" />
+  <xacro:property name="tail_fin_chord" value="0.12" />
+  <xacro:property name="tail_fin_thickness" value="0.008" />
+  <xacro:property name="tail_fin_z_offset" value="0.05" />
+  <!-- TVC: real mechanism uses rods + rudder + 4 spherical attachment points; sliding ball gives ~30 deg cone -->
+  <xacro:property name="tvc_range_rad" value="0.5236" />
 
   <material name="blue">
     <color rgba="0 0 0.8 1"/>
@@ -74,6 +84,7 @@
     <xacro:box_inertia m="3" w="${body_length}" h="${body_width}" d="${body_width}" xyz="0 0 0" rpy="0 0 0"/>
   </link>
 
+  <!-- Nose: design has pointed faceted cone; cylinder is a simplified stand-in. -->
   <link name="nose_link">
     <visual>
       <geometry>
@@ -97,7 +108,7 @@
     <origin xyz="${body_length/2} 0 0"/>
   </joint>
 
-<link name="camera_night_link">
+  <link name="camera_night_link">
     <visual>
       <geometry>
         <box size="${night_cam_size_x} ${night_cam_size_y} ${night_cam_size_z}"/>
@@ -111,7 +122,6 @@
     <parent link="nose_link"/>
     <child link="camera_night_link"/>
     <origin xyz="${nose_length*0.8} ${cam_separation/2} 0" rpy="0 0 0"/>
-    <xacro:cylinder_inertia m="0.01" r="${zoom_cam_size/2}" h="${zoom_cam_size*1.5}" xyz="0 0 0" rpy="0 1.57 0"/>
   </joint>
   
   <link name="camera_zoom_link">
@@ -122,6 +132,7 @@
       <origin xyz="0 0 0" rpy="0 1.57 0"/>
       <material name="black"/>
     </visual>
+    <xacro:box_inertia m="0.01" w="${zoom_cam_size*1.5}" h="${zoom_cam_size}" d="${zoom_cam_size}" xyz="0 0 0" rpy="0 0 0"/>
   </link>
 
   <joint name="camera_zoom_joint" type="fixed">
@@ -154,6 +165,12 @@
       <origin xyz="0 ${single_wing_span/2} 0" rpy="0 0 0"/>
       <material name="blue"/>
     </visual>
+    <collision>
+      <geometry>
+        <box size="0.1 ${single_wing_span} 0.02"/>
+      </geometry>
+      <origin xyz="0 ${single_wing_span/2} 0" rpy="0 0 0"/>
+    </collision>
     <xacro:box_inertia m="0.05" w="0.1" h="${single_wing_span}" d="0.02" xyz="0 ${single_wing_span/2} 0" rpy="0 0 0"/>
   </link>
 
@@ -172,6 +189,12 @@
       <origin xyz="0 -${single_wing_span/2} 0" rpy="0 0 0"/>
       <material name="blue"/>
     </visual>
+    <collision>
+      <geometry>
+        <box size="0.1 ${single_wing_span} 0.02"/>
+      </geometry>
+      <origin xyz="0 -${single_wing_span/2} 0" rpy="0 0 0"/>
+    </collision>
     <xacro:box_inertia m="0.05" w="0.1" h="${single_wing_span}" d="0.02" xyz="0 -${single_wing_span/2} 0" rpy="0 0 0"/>
   </link>
 
@@ -182,6 +205,11 @@
     <axis xyz="1 0 0"/> <limit lower="0" upper="1.57" effort="10" velocity="1"/>
   </joint>
 
+  <!-- Tail structure: cylinder mount. Real hardware: a sliding ball carries the tail propeller.
+       Four rods connect the ball to the tail structure; their attachment points on the ball
+       are roughly at the four vertices of a square. Additional rods connect the rudder.
+       Servo motors drive the rods; the ball slides to produce nozzle rotation (~30 deg).
+       Below we model the resulting motion as pitch + yaw revolute joints (equivalent kinematics). -->
   <link name="tail_mount">
     <visual>
       <geometry>
@@ -190,6 +218,12 @@
       <origin xyz="-${tail_length/2} 0 0" rpy="0 1.57 0"/>
       <material name="red"/>
     </visual>
+    <collision>
+      <geometry>
+        <cylinder length="${tail_length}" radius="0.05"/>
+      </geometry>
+      <origin xyz="-${tail_length/2} 0 0" rpy="0 1.57 0"/>
+    </collision>
     <xacro:cylinder_inertia m="0.05" r="0.05" h="${tail_length}" xyz="-${tail_length/2} 0 0" rpy="0 1.57 0"/>
   </link>
 
@@ -199,21 +233,196 @@
     <origin xyz="-${body_length/2} 0 0"/>
   </joint>
 
-  <link name="nozzle">
+  <!-- Two counter-rotating ducted propellers at tail–body junction (stacked up/down); fully part of tail. -->
+  <link name="ducted_fan_upper_link">
     <visual>
       <geometry>
-        <sphere radius="0.06"/>
+        <cylinder radius="${ducted_fan_outer_r}" length="${ducted_fan_depth}"/>
       </geometry>
+      <!-- Duct axis along +Z (thrust perpendicular to XY plane) -->
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <material name="black"/>
+    </visual>
+    <visual>
+      <geometry>
+        <cylinder radius="${ducted_fan_inner_r}" length="${ducted_fan_depth*1.1}"/>
+      </geometry>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
       <material name="blue"/>
     </visual>
-    <xacro:sphere_inertia m="0.05" r="0.06" xyz="0 0 0" rpy="0 0 0"/>
+    <collision>
+      <geometry>
+        <cylinder radius="${ducted_fan_outer_r}" length="${ducted_fan_depth}"/>
+      </geometry>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+    </collision>
+    <xacro:cylinder_inertia m="0.08" r="${ducted_fan_outer_r}" h="${ducted_fan_depth}" xyz="0 0 0" rpy="0 0 0"/>
+  </link>
+
+  <joint name="ducted_fan_upper_joint" type="fixed">
+    <parent link="tail_mount"/>
+    <child link="ducted_fan_upper_link"/>
+    <origin xyz="0 0 ${ducted_fan_z_sep/2}" rpy="0 0 0"/>
+  </joint>
+
+  <link name="ducted_fan_lower_link">
+    <visual>
+      <geometry>
+        <cylinder radius="${ducted_fan_outer_r}" length="${ducted_fan_depth}"/>
+      </geometry>
+      <!-- Duct axis along +Z (thrust perpendicular to XY plane) -->
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <material name="black"/>
+    </visual>
+    <visual>
+      <geometry>
+        <cylinder radius="${ducted_fan_inner_r}" length="${ducted_fan_depth*1.1}"/>
+      </geometry>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <material name="blue"/>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder radius="${ducted_fan_outer_r}" length="${ducted_fan_depth}"/>
+      </geometry>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+    </collision>
+    <xacro:cylinder_inertia m="0.08" r="${ducted_fan_outer_r}" h="${ducted_fan_depth}" xyz="0 0 0" rpy="0 0 0"/>
+  </link>
+  
+  <joint name="ducted_fan_lower_joint" type="fixed">
+    <parent link="tail_mount"/>
+    <child link="ducted_fan_lower_link"/>
+    <origin xyz="0 0 -${ducted_fan_z_sep/2}" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Two horizontal tail fins (design: symmetric left/right stabilizers on tail boom). -->
+  <link name="tail_fin_left_link">
+    <visual>
+      <geometry>
+        <box size="${tail_fin_chord} ${tail_fin_thickness} ${tail_fin_span}"/>
+      </geometry>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <material name="red"/>
+    </visual>
+    <xacro:box_inertia m="0.01" w="${tail_fin_chord}" h="${tail_fin_thickness}" d="${tail_fin_span}" xyz="0 0 0" rpy="0 0 0"/>
+  </link>
+  
+  <joint name="tail_fin_left_joint" type="fixed">
+    <parent link="tail_mount"/>
+    <child link="tail_fin_left_link"/>
+    <origin xyz="-${tail_length/2} 0 ${tail_fin_z_offset}" rpy="0 0 0"/>
+  </joint>
+
+  <link name="tail_fin_right_link">
+    <visual>
+      <geometry>
+        <box size="${tail_fin_chord} ${tail_fin_thickness} ${tail_fin_span}"/>
+      </geometry>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <material name="red"/>
+    </visual>
+    <xacro:box_inertia m="0.01" w="${tail_fin_chord}" h="${tail_fin_thickness}" d="${tail_fin_span}" xyz="0 0 0" rpy="0 0 0"/>
+  </link>
+  
+  <joint name="tail_fin_right_joint" type="fixed">
+    <parent link="tail_mount"/>
+    <child link="tail_fin_right_link"/>
+    <origin xyz="-${tail_length/2} 0 -${tail_fin_z_offset}" rpy="0 0 0"/>
+  </joint>
+
+  <!-- TVC equivalent: pitch + yaw stand in for rods/sliding ball; servo commands map to these joints (30 deg). -->
+  <link name="tvc_gimbal_link">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.01"/>
+      <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6"/>
+    </inertial>
   </link>
 
   <joint name="tvc_pitch_joint" type="revolute">
     <parent link="tail_mount"/>
-    <child link="nozzle"/>
+    <child link="tvc_gimbal_link"/>
     <origin xyz="-${tail_length} 0 0"/>
-    <axis xyz="0 1 0"/> <limit lower="-0.5" upper="0.5" effort="10" velocity="5"/>
+    <axis xyz="0 1 0"/> <limit lower="-${tvc_range_rad}" upper="${tvc_range_rad}" effort="10" velocity="5"/>
   </joint>
+
+  <!-- Nozzle: design has bell-shaped housing + two-bladed propeller at rear (TVC joint ahead of this). -->
+  <link name="nozzle">
+    <visual>
+      <geometry>
+        <cylinder radius="0.06" length="0.04"/>
+      </geometry>
+      <origin xyz="0.02 0 0" rpy="0 1.57 0"/>
+      <material name="blue"/>
+    </visual>
+    <visual>
+      <geometry>
+        <box size="0.005 0.12 0.02"/>
+      </geometry>
+      <origin xyz="0.04 0 0" rpy="0 0 0"/>
+      <material name="black"/>
+    </visual>
+    <visual>
+      <geometry>
+        <box size="0.005 0.02 0.12"/>
+      </geometry>
+      <origin xyz="0.04 0 0" rpy="0 0 0"/>
+      <material name="black"/>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder radius="0.06" length="0.06"/>
+      </geometry>
+      <origin xyz="0.03 0 0" rpy="0 1.57 0"/>
+    </collision>
+    <!-- Inertia: bell is dominant; use cylinder (axis x) for better accuracy than sphere -->
+    <xacro:cylinder_inertia m="0.05" r="0.06" h="0.06" xyz="0.03 0 0" rpy="0 1.57 0"/>
+  </link>
+
+  <joint name="tvc_yaw_joint" type="revolute">
+    <parent link="tvc_gimbal_link"/>
+    <child link="nozzle"/>
+    <origin xyz="0 0 0"/>
+    <axis xyz="0 0 1"/> <limit lower="-${tvc_range_rad}" upper="${tvc_range_rad}" effort="10" velocity="5"/>
+  </joint>
+
+  <!-- ros2_control: expose joint command/state for Gazebo and real hardware -->
+  <ros2_control name="TriBotControl" type="system">
+    <hardware>
+      <plugin>gazebo_ros2_control/GazeboSystem</plugin>
+    </hardware>
+    <joint name="left_wing_fold_joint">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+    <joint name="right_wing_fold_joint">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+    <joint name="tvc_pitch_joint">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+    <joint name="tvc_yaw_joint">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+  </ros2_control>
+
+  <!-- Gazebo plugin: load ros2_control controller manager and controllers.
+       When launching in Gazebo, the launch file must pass the absolute path to
+       config/controllers.yaml via: controllers_file:=/path/to/controllers.yaml
+       (e.g. from get_package_share_directory), so the plugin can load it. -->
+  <xacro:property name="controllers_file" value=""/>
+  <gazebo>
+    <plugin name="gazebo_ros2_control" filename="libgazebo_ros2_control.so">
+      <parameters>${controllers_file}</parameters>
+    </plugin>
+  </gazebo>
 
 </robot>
