@@ -70,6 +70,14 @@
     <color rgba="0.1 0.1 0.1 1"/>
   </material>
 
+  <!-- Dummy root link (no inertia) for KDL: robot_state_publisher warns if root has inertia -->
+  <link name="base_footprint"/>
+  <joint name="base_footprint_joint" type="fixed">
+    <parent link="base_footprint"/>
+    <child link="base_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+
   <link name="base_link">
     <visual>
       <geometry>
@@ -388,42 +396,78 @@
     <axis xyz="0 0 1"/> <limit lower="-${tvc_range_rad}" upper="${tvc_range_rad}" effort="10" velocity="5"/>
   </joint>
 
-  <!-- ros2_control: expose joint command/state for Gazebo Harmonic (gz_ros2_control) and real hardware -->
-  <ros2_control name="TriBotControl" type="system">
-    <hardware>
-      <plugin>gz_ros2_control/GazeboSimSystem</plugin>
-    </hardware>
-    <joint name="left_wing_fold_joint">
-      <command_interface name="position"/>
-      <state_interface name="position"/>
-      <state_interface name="velocity"/>
-    </joint>
-    <joint name="right_wing_fold_joint">
-      <command_interface name="position"/>
-      <state_interface name="position"/>
-      <state_interface name="velocity"/>
-    </joint>
-    <joint name="tvc_pitch_joint">
-      <command_interface name="position"/>
-      <state_interface name="position"/>
-      <state_interface name="velocity"/>
-    </joint>
-    <joint name="tvc_yaw_joint">
-      <command_interface name="position"/>
-      <state_interface name="position"/>
-      <state_interface name="velocity"/>
-    </joint>
-  </ros2_control>
-
-  <!-- Gazebo Harmonic (gz_ros2_control): load controller manager and controllers.
-       Launch must pass controllers_file:=/path/to/controllers.yaml (e.g. from get_package_share_directory). -->
+  <!-- ros2_control: Gazebo Harmonic (gz_ros2_control) or Fortress (ign_ros2_control). Launch: gazebo_fortress:=0 for Harmonic, :=1 for Fortress. -->
+  <xacro:property name="gazebo_fortress" value="0"/>
   <xacro:property name="controllers_file" value=""/>
-  <gazebo>
-    <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
-      <robot_param>robot_description</robot_param>
-      <robot_param_node>robot_state_publisher</robot_param_node>
-      <parameters>${controllers_file}</parameters>
-    </plugin>
-  </gazebo>
+
+  <xacro:unless value="${gazebo_fortress}">
+    <ros2_control name="TriBotControl" type="system">
+      <hardware>
+        <plugin>gz_ros2_control/GazeboSimSystem</plugin>
+      </hardware>
+      <joint name="left_wing_fold_joint">
+        <command_interface name="position"/>
+        <state_interface name="position"/>
+        <state_interface name="velocity"/>
+      </joint>
+      <joint name="right_wing_fold_joint">
+        <command_interface name="position"/>
+        <state_interface name="position"/>
+        <state_interface name="velocity"/>
+      </joint>
+      <joint name="tvc_pitch_joint">
+        <command_interface name="position"/>
+        <state_interface name="position"/>
+        <state_interface name="velocity"/>
+      </joint>
+      <joint name="tvc_yaw_joint">
+        <command_interface name="position"/>
+        <state_interface name="position"/>
+        <state_interface name="velocity"/>
+      </joint>
+    </ros2_control>
+    <gazebo>
+      <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+        <robot_param>robot_description</robot_param>
+        <robot_param_node>robot_state_publisher</robot_param_node>
+        <parameters>${controllers_file}</parameters>
+      </plugin>
+    </gazebo>
+  </xacro:unless>
+
+  <xacro:if value="${gazebo_fortress}">
+    <ros2_control name="TriBotControl" type="system">
+      <hardware>
+        <plugin>ign_ros2_control/IgnitionSystem</plugin>
+      </hardware>
+      <joint name="left_wing_fold_joint">
+        <command_interface name="position"/>
+        <state_interface name="position"/>
+        <state_interface name="velocity"/>
+      </joint>
+      <joint name="right_wing_fold_joint">
+        <command_interface name="position"/>
+        <state_interface name="position"/>
+        <state_interface name="velocity"/>
+      </joint>
+      <joint name="tvc_pitch_joint">
+        <command_interface name="position"/>
+        <state_interface name="position"/>
+        <state_interface name="velocity"/>
+      </joint>
+      <joint name="tvc_yaw_joint">
+        <command_interface name="position"/>
+        <state_interface name="position"/>
+        <state_interface name="velocity"/>
+      </joint>
+    </ros2_control>
+    <gazebo>
+      <plugin filename="ign_ros2_control-system" name="ign_ros2_control::IgnitionROS2ControlPlugin">
+        <robot_param>robot_description</robot_param>
+        <robot_param_node>robot_state_publisher</robot_param_node>
+        <parameters>${controllers_file}</parameters>
+      </plugin>
+    </gazebo>
+  </xacro:if>
 
 </robot>
