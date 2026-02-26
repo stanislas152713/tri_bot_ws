@@ -52,7 +52,8 @@
   <xacro:property name="tail_fin_span" value="0.06" />
   <xacro:property name="tail_fin_chord" value="0.12" />
   <xacro:property name="tail_fin_thickness" value="0.008" />
-  <xacro:property name="tail_fin_z_offset" value="0.05" />
+  <!-- tail fins on sides (left/right, Y axis); offset from centerline -->
+  <xacro:property name="tail_fin_y_offset" value="0.04" />
   <!-- TVC: real mechanism uses rods + rudder + 4 spherical attachment points; sliding ball gives ~30 deg cone -->
   <xacro:property name="tvc_range_rad" value="0.5236" />
 
@@ -311,7 +312,7 @@
   <joint name="tail_fin_left_joint" type="fixed">
     <parent link="tail_mount"/>
     <child link="tail_fin_left_link"/>
-    <origin xyz="-${tail_length/2} 0 ${tail_fin_z_offset}" rpy="0 0 0"/>
+    <origin xyz="-${tail_length/2} -${tail_fin_y_offset} 0" rpy="0 0 0"/>
   </joint>
 
   <link name="tail_fin_right_link">
@@ -328,7 +329,7 @@
   <joint name="tail_fin_right_joint" type="fixed">
     <parent link="tail_mount"/>
     <child link="tail_fin_right_link"/>
-    <origin xyz="-${tail_length/2} 0 -${tail_fin_z_offset}" rpy="0 0 0"/>
+    <origin xyz="-${tail_length/2} ${tail_fin_y_offset} 0" rpy="0 0 0"/>
   </joint>
 
   <!-- TVC equivalent: pitch + yaw stand in for rods/sliding ball; servo commands map to these joints (30 deg). -->
