@@ -298,15 +298,16 @@
   </joint>
 
   <!-- Two horizontal tail fins (design: symmetric left/right stabilizers on tail boom). -->
+  <!-- horizontal tail fin (same orientation as wing: flat in XY, thin in Z) -->
   <link name="tail_fin_left_link">
     <visual>
       <geometry>
-        <box size="${tail_fin_chord} ${tail_fin_thickness} ${tail_fin_span}"/>
+        <box size="${tail_fin_chord} ${tail_fin_span} ${tail_fin_thickness}"/>
       </geometry>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <material name="red"/>
     </visual>
-    <xacro:box_inertia m="0.01" w="${tail_fin_chord}" h="${tail_fin_thickness}" d="${tail_fin_span}" xyz="0 0 0" rpy="0 0 0"/>
+    <xacro:box_inertia m="0.01" w="${tail_fin_chord}" h="${tail_fin_span}" d="${tail_fin_thickness}" xyz="0 0 0" rpy="0 0 0"/>
   </link>
   
   <joint name="tail_fin_left_joint" type="fixed">
@@ -318,12 +319,12 @@
   <link name="tail_fin_right_link">
     <visual>
       <geometry>
-        <box size="${tail_fin_chord} ${tail_fin_thickness} ${tail_fin_span}"/>
+        <box size="${tail_fin_chord} ${tail_fin_span} ${tail_fin_thickness}"/>
       </geometry>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <material name="red"/>
     </visual>
-    <xacro:box_inertia m="0.01" w="${tail_fin_chord}" h="${tail_fin_thickness}" d="${tail_fin_span}" xyz="0 0 0" rpy="0 0 0"/>
+    <xacro:box_inertia m="0.01" w="${tail_fin_chord}" h="${tail_fin_span}" d="${tail_fin_thickness}" xyz="0 0 0" rpy="0 0 0"/>
   </link>
   
   <joint name="tail_fin_right_joint" type="fixed">
