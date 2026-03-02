@@ -397,7 +397,7 @@
   </joint>
 
   <!-- ros2_control + gz_ros2_control for Gazebo Harmonic -->
-  <xacro:property name="controllers_file" value=""/>
+  <xacro:arg name="controllers_file" default=""/>
 
   <ros2_control name="TriBotControl" type="system">
     <hardware>

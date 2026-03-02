@@ -17,20 +17,7 @@ To use this repo, use **Ubuntu 22.04 (Jammy Jellyfish)**. Clone the repo and ins
   - **Install**: https://ardupilot.org/dev/docs/building-setup-linux.html#building-setup-linux
 
 - **Gazebo Harmonic** (required for this project and ArduPilot SITL; **do not install Fortress**)
-  1. Install Gazebo Harmonic:
-     ```bash
-     sudo apt-get update
-     sudo apt-get install curl lsb-release gnupg
-     sudo curl https://packages.osrfoundation.org/gazebo.gpg --output /usr/share/keyrings/pkgs-osrf-archive-keyring.gpg
-     echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/pkgs-osrf-archive-keyring.gpg] https://packages.osrfoundation.org/gazebo/ubuntu-stable $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/gazebo-stable.list > /dev/null
-     sudo apt-get update
-     sudo apt-get install gz-harmonic
-     ```
-  2. Install ROS 2 bridge and ros2_control for Harmonic (after sourcing ROS 2):
-     ```bash
-     source /opt/ros/humble/setup.bash
-     sudo apt-get install ros-humble-ros-gz-sim ros-humble-gz-ros2-control
-     ```
+  - **Install**: https://gazebosim.org/docs/harmonic/getstarted/ Find the harmonic release.
 
 - **ArduPilot Gazebo plugin**
   - **Install**: https://github.com/ArduPilot/ardupilot_gazebo  
@@ -51,6 +38,11 @@ After everything is installed, run the following to build the workspace:
 ```
 cd ~/tri_bot_ws //replace the path with the path to your local tri_bot_ws
 rosdep install --from-paths src --ignore-src -r -y
-colcon build --symlink-install
+colcon build
 source install/setup.bash
+```
+
+Run the following to open Gazebo:
+```
+ros2 launch tri_bot_description gazebo.launch.py
 ```
