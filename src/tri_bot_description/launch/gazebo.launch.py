@@ -1,5 +1,5 @@
-# Launch tri_bot in Gazebo (Harmonic or Fortress).
-# Harmonic: gz_ros2_control, ros_gz_sim. Fortress: ign_ros2_control (use_fortress:=true).
+# Launch tri_bot in Gazebo Harmonic.
+# Uses gz_ros2_control with ros_gz_sim.
 # OpenGL 3.3 not supported: use_software_gl:=true for 3D GUI (Mesa software rendering, slower).
 
 import os
@@ -17,17 +17,15 @@ from launch_ros.parameter_descriptions import ParameterValue
 
 
 def _launch_setup(context, *args, **kwargs):
-    use_fortress_val = LaunchConfiguration('use_fortress', default='true').perform(context)
-    gazebo_fortress_xacro = '1' if use_fortress_val.lower() in ('true', '1', 'yes') else '0'
     pkg_share = get_package_share_directory('tri_bot_description')
     model_path = os.path.join(pkg_share, 'urdf', 'tri_bot.xacro')
     controllers_path = os.path.join(pkg_share, 'config', 'controllers.yaml')
     urdf_path = os.path.join(tempfile.gettempdir(), 'tri_bot_gazebo.urdf')
+    # Generate URDF for Gazebo Harmonic (gz_ros2_control)
     subprocess.run(
         [
             'xacro', model_path,
             'controllers_file:=' + controllers_path,
-            'gazebo_fortress:=' + gazebo_fortress_xacro,
             '-o', urdf_path,
         ],
         check=True,
@@ -102,11 +100,6 @@ def generate_launch_description():
             'start_gazebo',
             default_value='true',
             description='Start Gazebo with empty.sdf',
-        ),
-        DeclareLaunchArgument(
-            'use_fortress',
-            default_value='true',
-            description='Use Gazebo Fortress (ign_ros2_control). Set false for Harmonic (gz_ros2_control).',
         ),
         DeclareLaunchArgument(
             'use_software_gl',
