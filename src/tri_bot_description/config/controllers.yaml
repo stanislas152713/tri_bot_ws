@@ -10,9 +10,12 @@ controller_manager:
     # Forwards position commands to the four actuated joints (wings + TVC pitch/yaw).
     position_controller:
       type: forward_command_controller/ForwardCommandController
-      joints:
-        - left_wing_fold_joint
-        - right_wing_fold_joint
-        - tvc_pitch_joint
-        - tvc_yaw_joint
-      interface_name: position
+
+position_controller:
+  ros__parameters:
+    joints:
+      - left_wing_fold_joint
+      - right_wing_fold_joint
+      - tvc_pitch_joint
+      - tvc_yaw_joint
+    interface_name: position

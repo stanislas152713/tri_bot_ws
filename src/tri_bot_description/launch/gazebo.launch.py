@@ -35,6 +35,9 @@ def _launch_setup(context, *args, **kwargs):
 
     use_sim_time = LaunchConfiguration('use_sim_time', default='true')
     start_gazebo = LaunchConfiguration('start_gazebo', default='true')
+    controller_manager_timeout = LaunchConfiguration('controller_manager_timeout', default='90')
+    spawn_jsb_delay = float(LaunchConfiguration('spawn_jsb_delay', default='10.0').perform(context))
+    spawn_position_delay = float(LaunchConfiguration('spawn_position_delay', default='12.0').perform(context))
     use_software_gl_val = LaunchConfiguration('use_software_gl', default='false').perform(context)
 
     robot_state_publisher_node = Node(
@@ -55,7 +58,7 @@ def _launch_setup(context, *args, **kwargs):
         cmd=[
             'ros2', 'run', 'controller_manager', 'spawner',
             'joint_state_broadcaster',
-            '--controller-manager-timeout', '30',
+            '--controller-manager-timeout', controller_manager_timeout,
         ],
         output='screen',
     )
@@ -63,7 +66,7 @@ def _launch_setup(context, *args, **kwargs):
         cmd=[
             'ros2', 'run', 'controller_manager', 'spawner',
             'position_controller',
-            '--controller-manager-timeout', '30',
+            '--controller-manager-timeout', controller_manager_timeout,
         ],
         output='screen',
     )
@@ -71,8 +74,8 @@ def _launch_setup(context, *args, **kwargs):
     actions = [
         robot_state_publisher_node,
         TimerAction(period=3.0, actions=[spawn_entity_cmd]),
-        TimerAction(period=6.0, actions=[spawn_joint_state_broadcaster]),
-        TimerAction(period=7.0, actions=[spawn_position_controller]),
+        TimerAction(period=spawn_jsb_delay, actions=[spawn_joint_state_broadcaster]),
+        TimerAction(period=spawn_position_delay, actions=[spawn_position_controller]),
     ]
 
     try:
@@ -80,7 +83,7 @@ def _launch_setup(context, *args, **kwargs):
         gz_sim_launch = os.path.join(pkg_ros_gz_sim, 'launch', 'gz_sim.launch.py')
         start_gz_sim = IncludeLaunchDescription(
             PythonLaunchDescriptionSource(gz_sim_launch),
-            launch_arguments={'gz_args': 'empty.sdf'}.items(),
+            launch_arguments={'gz_args': '-r empty.sdf'}.items(),
         )
         if IfCondition(start_gazebo).evaluate(context):
             actions.insert(0, start_gz_sim)
@@ -105,6 +108,21 @@ def generate_launch_description():
             'use_software_gl',
             default_value='false',
             description='Set LIBGL_ALWAYS_SOFTWARE=1 for Mesa software rendering (3D GUI, slower).',
+        ),
+        DeclareLaunchArgument(
+            'controller_manager_timeout',
+            default_value='90',
+            description='Spawner timeout waiting for controller_manager services (seconds).',
+        ),
+        DeclareLaunchArgument(
+            'spawn_jsb_delay',
+            default_value='10.0',
+            description='Delay before spawning joint_state_broadcaster (seconds).',
+        ),
+        DeclareLaunchArgument(
+            'spawn_position_delay',
+            default_value='12.0',
+            description='Delay before spawning position_controller (seconds).',
         ),
         OpaqueFunction(function=_launch_setup),
     ])
