@@ -23,8 +23,34 @@ To use this repo, use **Ubuntu 22.04 (Jammy Jellyfish)**. Clone the repo and ins
   - **Install**: https://github.com/ArduPilot/ardupilot_gazebo  
   - Build for **Gazebo Harmonic**: set `GZ_VERSION=harmonic` and build as per the repo README.
 
-- **Optional – RViz** (for `display.launch.py`)
-  - `sudo apt install ros-humble-rviz2`
+- **ROS 2 packages needed for this workspace** (build, Gazebo launch, and control)
+  - All of the following are required for `gazebo.launch.py` and controller spawners. Install in one go (ROS 2 Humble):
+    ```bash
+    sudo apt update
+    sudo apt install -y \
+      ros-humble-ros-gz-sim \
+      ros-humble-gz-ros2-control \
+      ros-humble-ros2-control \
+      ros-humble-ros2-controllers \
+      ros-humble-xacro \
+      ros-humble-robot-state-publisher
+    ```
+  - What each does:
+    - **ros_gz_sim**: spawns the robot in Gazebo and can start the sim.
+    - **gz_ros2_control**: Gazebo system plugin (avoids "couldn't find shared library [gz_ros2_control-system]").
+    - **ros2_control** / **ros2_controllers**: provide `controller_manager`, `joint_state_broadcaster`, and `position_controller`.
+    - **xacro**: used by the launch to generate URDF from `tri_bot.xacro`.
+    - **robot_state_publisher**: publishes robot state from URDF/joint states.
+  - If you still see **"Failed to load system plugin [gz_ros2_control-system] : couldn't find shared library"**:
+    1. Start the launch from a shell where you have run `source /opt/ros/humble/setup.bash` (and `source install/setup.bash`).
+    2. If needed, add the ROS 2 lib path before launching:
+       ```bash
+       export GZ_SIM_SYSTEM_PLUGIN_PATH="/opt/ros/humble/lib:$GZ_SIM_SYSTEM_PLUGIN_PATH"
+       ```
+    3. If you use **Gazebo Harmonic** and the Humble deb does not work, build `gz_ros2_control` from source for Harmonic (see [gz_ros2_control docs](https://control.ros.org/humble/doc/gz_ros2_control/doc/index.html)).
+
+- **Optional – RViz**
+  - `sudo apt install ros-humble-rviz2` (for `display.launch.py`)
 
 - **SITL** (comes with ArduPilot)
   - Test SITL: https://ardupilot.org/dev/docs/setting-up-sitl-on-linux.html
