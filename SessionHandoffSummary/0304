@@ -1,0 +1,26 @@
+Paste this at the top of a future chat:
+Project: tri_bot_ws (ROS2 Humble + Gazebo Harmonic + gz_ros2_control)
+User preference: responses must be Chinese first, English second; code/file content remains English
+Current status: simulation and control pipeline is working; both joint_state_broadcaster and position_controller can reach active
+Fixed: controllers.yaml converted to standard ros2_control layout (types under controller_manager, position_controller params at top level)
+Improved: gazebo.launch.py startup tolerance
+controller_manager_timeout default 90
+spawn_jsb_delay default 10s
+spawn_position_delay default 12s
+still supports use_software_gl:=true
+GUI note: in non-headless mode, intermittent controller_manager reachability occurred; reliability improved with export LIBGL_ALWAYS_SOFTWARE=1 + use_software_gl:=true
+Added executable scripts:
+scripts/start_sim.sh
+scripts/check_sim_health.sh
+scripts/test_position_controller.sh
+README updates completed:
+added validated startup sequence
+corrected env var usage to export LIBGL_ALWAYS_SOFTWARE=1
+Validation outcome: user successfully confirmed both controllers as active via ros2 control list_controllers
+Team split: user owns control system; teammate owns CAD/modeling (SolidWorks model is ready)
+Recommended next phase:
+1) incremental visual mesh replacement in xacro (keep collision conservative initially)
+2) update key inertials from CAD mass properties
+3) freeze model-control contract (no silent joint name/axis/limit changes)
+4) implement minimal tri_bot_control node + mode manager
+Note: user earlier asked not to keep writing README, then later explicitly requested README edits and one update was made; confirm before further README changes.
