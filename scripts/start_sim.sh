@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-WS_DIR="${WS_DIR:-$HOME/tri_bot_ws}"
+# Use directory containing this script to find workspace root (e.g. .../tri_bot_ws/scripts -> .../tri_bot_ws).
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+WS_DIR="${WS_DIR:-$(dirname "$SCRIPT_DIR")}"
 
 # ROS setup scripts read optional vars that may be unset under `set -u`.
 set +u

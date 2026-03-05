@@ -6,7 +6,8 @@ set -euo pipefail
 # neutral -> small deflection -> neutral.
 # Goal: verify command transport + controller response without aggressive motion.
 
-WS_DIR="${WS_DIR:-$HOME/tri_bot_ws}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+WS_DIR="${WS_DIR:-$(dirname "$SCRIPT_DIR")}"
 mkdir -p "$WS_DIR/log"
 export ROS_LOG_DIR="$WS_DIR/log"
 
