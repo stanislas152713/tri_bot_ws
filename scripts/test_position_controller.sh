@@ -3,7 +3,8 @@ set -euo pipefail
 
 # This script performs a safe smoke test for command execution.
 # It sends a small command sequence to /position_controller/commands:
-# neutral -> small deflection -> neutral.
+# neutral -> wing-only deflection -> neutral.
+# V1 MVP assumption: TVC channels remain fixed at 0.0.
 # Goal: verify command transport + controller response without aggressive motion.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -30,6 +31,7 @@ publish_once() {
 
 echo "[INFO] Running safe position controller test sequence..."
 echo "[INFO] Order: [left_wing, right_wing, tvc_pitch, tvc_yaw]"
+echo "[INFO] V1 mode: TVC locked, commands keep tvc_pitch/tvc_yaw at 0.0"
 
 # 1) Neutral
 # Test purpose:
@@ -37,10 +39,10 @@ echo "[INFO] Order: [left_wing, right_wing, tvc_pitch, tvc_yaw]"
 publish_once "[0.0, 0.0, 0.0, 0.0]"
 sleep 1
 
-# 2) Small TVC deflection
+# 2) Small wing folding command (TVC stays neutral)
 # Test purpose:
-# - Validate that non-zero command is accepted and produces observable motion.
-publish_once "[0.0, 0.0, 0.1, -0.1]"
+# - Validate non-zero wing commands are accepted and produce observable wing motion.
+publish_once "[-0.3, 0.3, 0.0, 0.0]"
 sleep 2
 
 # 3) Back to neutral
