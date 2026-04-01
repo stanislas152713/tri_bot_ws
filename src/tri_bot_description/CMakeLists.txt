@@ -38,4 +38,9 @@ install(DIRECTORY config
   DESTINATION share/${PROJECT_NAME}
 )
 
+# 4. Install mesh assets used by URDF visuals
+install(DIRECTORY meshes
+  DESTINATION share/${PROJECT_NAME}
+)
+
 ament_package()

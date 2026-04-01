@@ -32,6 +32,25 @@
     </inertial>
   </xacro:macro>
 
+  <!-- Debug visual marker for checking frame origins in Gazebo. -->
+  <xacro:macro name="debug_origin_marker" params="name parent xyz rpy radius rgba">
+    <link name="${name}">
+      <visual>
+        <geometry>
+          <sphere radius="${radius}"/>
+        </geometry>
+        <material>
+          <color rgba="${rgba}"/>
+        </material>
+      </visual>
+    </link>
+    <joint name="${name}_joint" type="fixed">
+      <parent link="${parent}"/>
+      <child link="${name}"/>
+      <origin xyz="${xyz}" rpy="${rpy}"/>
+    </joint>
+  </xacro:macro>
+
   <!-- All the values below are approximated -->
   <!-- The value indicates the length in meter -->
   <xacro:property name="body_length" value="0.16" />
@@ -196,7 +215,7 @@
         <box size="0.1 ${single_wing_span} 0.02"/>
       </geometry>
       <origin xyz="0 -${single_wing_span/2} 0" rpy="0 0 0"/>
-      <material name="blue"/>
+      <material name="red"/>
     </visual>
     <collision>
       <geometry>
@@ -397,6 +416,56 @@
     <!-- V1 MVP: lock TVC yaw at neutral (0 rad). -->
     <axis xyz="0 0 1"/> <limit lower="0.0" upper="0.0" effort="10" velocity="5"/>
   </joint>
+
+  <!-- Optional debug markers for key link/joint origins in Gazebo. -->
+  <xacro:arg name="show_debug_frames" default="false"/>
+  <xacro:if value="$(arg show_debug_frames)">
+    <!-- base_link origin -->
+    <xacro:debug_origin_marker
+      name="dbg_base_link_origin"
+      parent="base_link"
+      xyz="0 0 0"
+      rpy="0 0 0"
+      radius="0.012"
+      rgba="1 1 0 1"/>
+    <!-- wing fold joint origins (in base_link frame) -->
+    <xacro:debug_origin_marker
+      name="dbg_left_wing_joint_origin"
+      parent="base_link"
+      xyz="0.05 ${body_width/2} 0"
+      rpy="0 0 0"
+      radius="0.010"
+      rgba="0 0 1 1"/>
+    <xacro:debug_origin_marker
+      name="dbg_right_wing_joint_origin"
+      parent="base_link"
+      xyz="0.05 -${body_width/2} 0"
+      rpy="0 0 0"
+      radius="0.010"
+      rgba="1 0 0 1"/>
+    <!-- tail and TVC joint origins -->
+    <xacro:debug_origin_marker
+      name="dbg_tail_mount_joint_origin"
+      parent="base_link"
+      xyz="-${body_length/2} 0 0"
+      rpy="0 0 0"
+      radius="0.010"
+      rgba="1 0 1 1"/>
+    <xacro:debug_origin_marker
+      name="dbg_tvc_pitch_joint_origin"
+      parent="tail_mount"
+      xyz="-${tail_length} 0 0"
+      rpy="0 0 0"
+      radius="0.009"
+      rgba="0 1 1 1"/>
+    <xacro:debug_origin_marker
+      name="dbg_tvc_yaw_joint_origin"
+      parent="tvc_gimbal_link"
+      xyz="0 0 0"
+      rpy="0 0 0"
+      radius="0.009"
+      rgba="0 1 0 1"/>
+  </xacro:if>
 
   <!-- ros2_control + gz_ros2_control for Gazebo Harmonic -->
   <xacro:arg name="controllers_file" default=""/>
