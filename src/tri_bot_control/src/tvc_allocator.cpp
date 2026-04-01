@@ -2,6 +2,7 @@
 #include <array>
 #include <chrono>
 #include <memory>
+#include <string>
 
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/float32_multi_array.hpp"
@@ -15,7 +16,9 @@ public:
   TvcAllocatorNode()
   : Node("tvc_allocator"),
     timeout_seconds_(declare_parameter<double>("command_timeout_s", 0.5)),
-    publish_rate_hz_(declare_parameter<double>("publish_rate_hz", 50.0))
+    publish_rate_hz_(declare_parameter<double>("publish_rate_hz", 50.0)),
+    output_topic_(declare_parameter<std::string>(
+        "output_topic", "/position_controller/commands"))
   {
     // V1 contract: input is wing-only command [left_wing, right_wing].
     wing_cmd_sub_ = create_subscription<std_msgs::msg::Float32MultiArray>(
@@ -24,7 +27,7 @@ public:
 
     // Output contract: [left_wing, right_wing, tvc_pitch, tvc_yaw].
     position_cmd_pub_ = create_publisher<std_msgs::msg::Float64MultiArray>(
-      "/position_controller/commands", 10);
+      output_topic_, 10);
 
     publish_period_ = std::chrono::duration<double>(1.0 / std::max(1.0, publish_rate_hz_));
     publish_timer_ = create_wall_timer(
@@ -37,8 +40,8 @@ public:
 
     RCLCPP_INFO(
       get_logger(),
-      "tvc_allocator started: timeout=%.2fs, rate=%.1fHz (TVC locked at 0 for V1)",
-      timeout_seconds_, publish_rate_hz_);
+      "tvc_allocator started: topic=%s, timeout=%.2fs, rate=%.1fHz (TVC locked at 0 for V1)",
+      output_topic_.c_str(), timeout_seconds_, publish_rate_hz_);
   }
 
 private:
@@ -91,6 +94,7 @@ private:
   std::chrono::duration<double> publish_period_{};
   double timeout_seconds_{0.5};
   double publish_rate_hz_{50.0};
+  std::string output_topic_{};
 };
 
 int main(int argc, char ** argv)

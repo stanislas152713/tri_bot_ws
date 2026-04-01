@@ -18,14 +18,17 @@ from launch_ros.parameter_descriptions import ParameterValue
 
 def _launch_setup(context, *args, **kwargs):
     pkg_share = get_package_share_directory('tri_bot_description')
+    pkg_parent = os.path.dirname(pkg_share)
     model_path = os.path.join(pkg_share, 'urdf', 'tri_bot.xacro')
     controllers_path = os.path.join(pkg_share, 'config', 'controllers.yaml')
     urdf_path = os.path.join(tempfile.gettempdir(), 'tri_bot_gazebo.urdf')
+    show_debug_frames_val = LaunchConfiguration('show_debug_frames', default='false').perform(context)
     # Generate URDF for Gazebo Harmonic (gz_ros2_control)
     subprocess.run(
         [
             'xacro', model_path,
             'controllers_file:=' + controllers_path,
+            'show_debug_frames:=' + show_debug_frames_val,
             '-o', urdf_path,
         ],
         check=True,
@@ -71,11 +74,16 @@ def _launch_setup(context, *args, **kwargs):
         output='screen',
     )
 
+    resource_path = os.pathsep.join(
+        [p for p in [pkg_parent, os.environ.get('GZ_SIM_RESOURCE_PATH', '')] if p]
+    )
+    ign_resource_path = os.pathsep.join(
+        [p for p in [pkg_parent, os.environ.get('IGN_GAZEBO_RESOURCE_PATH', '')] if p]
+    )
+
     actions = [
-        robot_state_publisher_node,
-        TimerAction(period=3.0, actions=[spawn_entity_cmd]),
-        TimerAction(period=spawn_jsb_delay, actions=[spawn_joint_state_broadcaster]),
-        TimerAction(period=spawn_position_delay, actions=[spawn_position_controller]),
+        SetEnvironmentVariable(name='GZ_SIM_RESOURCE_PATH', value=resource_path),
+        SetEnvironmentVariable(name='IGN_GAZEBO_RESOURCE_PATH', value=ign_resource_path),
     ]
 
     try:
@@ -86,9 +94,16 @@ def _launch_setup(context, *args, **kwargs):
             launch_arguments={'gz_args': '-r empty.sdf'}.items(),
         )
         if IfCondition(start_gazebo).evaluate(context):
-            actions.insert(0, start_gz_sim)
+            actions.append(start_gz_sim)
     except Exception:
         pass
+
+    actions.extend([
+        robot_state_publisher_node,
+        TimerAction(period=3.0, actions=[spawn_entity_cmd]),
+        TimerAction(period=spawn_jsb_delay, actions=[spawn_joint_state_broadcaster]),
+        TimerAction(period=spawn_position_delay, actions=[spawn_position_controller]),
+    ])
     # LIBGL_ALWAYS_SOFTWARE=1: Mesa software rendering, 3D GUI without OpenGL 3.3 (slower)
     if use_software_gl_val.lower() in ('true', '1', 'yes'):
         actions.insert(0, SetEnvironmentVariable(name='LIBGL_ALWAYS_SOFTWARE', value='1'))
@@ -123,6 +138,11 @@ def generate_launch_description():
             'spawn_position_delay',
             default_value='12.0',
             description='Delay before spawning position_controller (seconds).',
+        ),
+        DeclareLaunchArgument(
+            'show_debug_frames',
+            default_value='false',
+            description='Render debug spheres at key link/joint origins.',
         ),
         OpaqueFunction(function=_launch_setup),
     ])

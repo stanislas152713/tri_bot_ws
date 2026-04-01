@@ -25,7 +25,11 @@ echo "[INFO] Checking controller_manager service..."
 # - Confirms the control backend is alive and discoverable.
 # - If this fails, Gazebo/gz_ros2_control/controller_manager did not initialize correctly.
 elapsed=0
-until ros2 service list | grep -q '^/controller_manager/list_controllers$'; do
+until true; do
+  services_output="$(ros2 service list || true)"
+  if grep -q '^/controller_manager/list_controllers$' <<< "$services_output"; then
+    break
+  fi
   if (( elapsed >= CHECK_TIMEOUT_SECONDS )); then
     echo "[FAIL] /controller_manager/list_controllers is not available."
     echo "[HINT] Make sure simulation is running in another terminal."
