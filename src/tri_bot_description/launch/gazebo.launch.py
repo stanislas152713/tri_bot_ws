@@ -22,13 +22,11 @@ def _launch_setup(context, *args, **kwargs):
     model_path = os.path.join(pkg_share, 'urdf', 'tri_bot.xacro')
     controllers_path = os.path.join(pkg_share, 'config', 'controllers.yaml')
     urdf_path = os.path.join(tempfile.gettempdir(), 'tri_bot_gazebo.urdf')
-    show_debug_frames_val = LaunchConfiguration('show_debug_frames', default='false').perform(context)
     # Generate URDF for Gazebo Harmonic (gz_ros2_control)
     subprocess.run(
         [
             'xacro', model_path,
             'controllers_file:=' + controllers_path,
-            'show_debug_frames:=' + show_debug_frames_val,
             '-o', urdf_path,
         ],
         check=True,
@@ -53,8 +51,21 @@ def _launch_setup(context, *args, **kwargs):
             {'use_sim_time': use_sim_time},
         ],
     )
+    # ros-humble-ros-gz-sim speaks Fortress transport — can't spawn into Harmonic.
+    # Use the native gz CLI service call instead.
     spawn_entity_cmd = ExecuteProcess(
-        cmd=['ros2', 'run', 'ros_gz_sim', 'create', '-file', urdf_path, '-name', 'tri_bot', '-z', '0.5'],
+        cmd=[
+            'gz', 'service',
+            '-s', '/world/empty/create',
+            '--reqtype', 'gz.msgs.EntityFactory',
+            '--reptype', 'gz.msgs.Boolean',
+            '--timeout', '10000',
+            '--req', (
+                f'sdf_filename: "{urdf_path}", '
+                'name: "tri_bot", '
+                'pose: {position: {z: 0.5}}'
+            ),
+        ],
         output='screen',
     )
     spawn_joint_state_broadcaster = ExecuteProcess(
@@ -91,7 +102,10 @@ def _launch_setup(context, *args, **kwargs):
         gz_sim_launch = os.path.join(pkg_ros_gz_sim, 'launch', 'gz_sim.launch.py')
         start_gz_sim = IncludeLaunchDescription(
             PythonLaunchDescriptionSource(gz_sim_launch),
-            launch_arguments={'gz_args': '-r empty.sdf'}.items(),
+            launch_arguments={
+                'gz_args': '-r empty.sdf',
+                'gz_version': '8',
+            }.items(),
         )
         if IfCondition(start_gazebo).evaluate(context):
             actions.append(start_gz_sim)
@@ -138,11 +152,6 @@ def generate_launch_description():
             'spawn_position_delay',
             default_value='12.0',
             description='Delay before spawning position_controller (seconds).',
-        ),
-        DeclareLaunchArgument(
-            'show_debug_frames',
-            default_value='false',
-            description='Render debug spheres at key link/joint origins.',
         ),
         OpaqueFunction(function=_launch_setup),
     ])

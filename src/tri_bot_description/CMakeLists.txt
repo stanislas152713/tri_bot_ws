@@ -39,7 +39,12 @@ install(DIRECTORY config
 )
 
 # 4. Install mesh assets used by URDF visuals
-install(DIRECTORY meshes
+install(DIRECTORY mesh
+  DESTINATION share/${PROJECT_NAME}
+)
+
+# 5. Install world SDF files (ArduPilot SITL)
+install(DIRECTORY worlds
   DESTINATION share/${PROJECT_NAME}
 )
 
