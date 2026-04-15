@@ -6,9 +6,7 @@ All control and decision changes must follow this contract unless explicitly upd
 ## 1) Scope and Assumptions (V1)
 
 - V1 focus: stable simulation and control path.
-- TVC is locked at neutral:
-  - `tvc_pitch_joint = 0.0`
-  - `tvc_yaw_joint = 0.0`
+- URDF actuation is **wing fold only** (`left_wing_fold_joint`, `right_wing_fold_joint`). The TVC assembly is a **fixed** mesh on the fuselage (`tvc_base_joint`).
 - Active control in V1 is wing folding only.
 - No complex linkage dynamics or advanced behavior strategy in this phase.
 
@@ -31,12 +29,10 @@ Primary actuator command topic:
 - Required order:
   1. `left_wing_fold_joint`
   2. `right_wing_fold_joint`
-  3. `tvc_pitch_joint`
-  4. `tvc_yaw_joint`
 
-V1 expected command shape:
+Command shape:
 
-- `[left_wing, right_wing, 0.0, 0.0]`
+- `[left_wing, right_wing]`
 
 ## 4) Input Interface for Minimal Control Node
 
@@ -61,7 +57,7 @@ Timeout behavior:
 
 - Parameter: `command_timeout_s` (default `0.5`)
 - If no valid input is received for longer than timeout:
-  - publish neutral command `[0.0, 0.0, 0.0, 0.0]`
+  - publish neutral command `[0.0, 0.0]`
 
 Publish loop:
 

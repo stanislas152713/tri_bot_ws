@@ -28,7 +28,7 @@ def generate_launch_description():
     )
 
     # Node B: Joint State Publisher GUI
-    # Function: Opens a small window with sliders to manually control joints (fold wings, move tail)
+    # Function: Opens a small window with sliders to manually control actuated joints (wing fold)
     joint_state_publisher_gui_node = Node(
         package='joint_state_publisher_gui',
         executable='joint_state_publisher_gui',

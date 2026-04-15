@@ -103,33 +103,33 @@ ros2 topic pub --once /is_wet std_msgs/msg/Bool "{data: false}" >/dev/null
 ros2 topic pub --once /set_mode std_msgs/msg/UInt8 "{data: 0}" >/dev/null
 sleep 0.5
 assert_close "wing(disarmed)" "$(read_data /wing_fold_cmd)" "0.0,0.0"
-assert_close "pos(disarmed)" "$(read_data /position_controller/commands)" "0.0,0.0,0.0,0.0"
+assert_close "pos(disarmed)" "$(read_data /position_controller/commands)" "0.0,0.0"
 
 echo "[INFO] Case 2: AIR + dry"
 ros2 topic pub --once /is_wet std_msgs/msg/Bool "{data: false}" >/dev/null
 ros2 topic pub --once /set_mode std_msgs/msg/UInt8 "{data: 1}" >/dev/null
 sleep 0.5
 assert_close "wing(air)" "$(read_data /wing_fold_cmd)" "0.0,0.0"
-assert_close "pos(air)" "$(read_data /position_controller/commands)" "0.0,0.0,0.0,0.0"
+assert_close "pos(air)" "$(read_data /position_controller/commands)" "0.0,0.0"
 
 echo "[INFO] Case 3: AIR + wet -> TRANSITION"
 ros2 topic pub --once /set_mode std_msgs/msg/UInt8 "{data: 1}" >/dev/null
 ros2 topic pub --once /is_wet std_msgs/msg/Bool "{data: true}" >/dev/null
 sleep 0.5
 assert_close "wing(transition)" "$(read_data /wing_fold_cmd)" "-0.8,0.8"
-assert_close "pos(transition)" "$(read_data /position_controller/commands)" "-0.8,0.8,0.0,0.0"
+assert_close "pos(transition)" "$(read_data /position_controller/commands)" "-0.8,0.8"
 
 echo "[INFO] Case 4: transition done -> UNDERWATER"
 sleep 2.2
 assert_close "wing(underwater)" "$(read_data /wing_fold_cmd)" "-1.2,1.2"
-assert_close "pos(underwater)" "$(read_data /position_controller/commands)" "-1.2,1.2,0.0,0.0"
+assert_close "pos(underwater)" "$(read_data /position_controller/commands)" "-1.2,1.2"
 
 echo "[INFO] Case 5: allocator timeout -> neutral"
 kill "${STATE_PID}" 2>/dev/null || true
 wait "${STATE_PID}" 2>/dev/null || true
 STATE_PID=""
 sleep 1.0
-assert_close "pos(timeout-neutral)" "$(read_data /position_controller/commands)" "0.0,0.0,0.0,0.0"
+assert_close "pos(timeout-neutral)" "$(read_data /position_controller/commands)" "0.0,0.0"
 
 echo "[OK] Acceptance test passed."
 #!/usr/bin/env bash
@@ -388,30 +388,30 @@ echo "[INFO] Case 1: DISARMED + dry -> neutral outputs"
 pub_wet_burst false
 pub_mode_burst 0
 wait_list_close "wing(disarmed)" "${WING_CMD_TOPIC}" "0.0,0.0"
-wait_list_close "pos(disarmed)" "${TEST_POS_CMD_TOPIC}" "0.0,0.0,0.0,0.0"
+wait_list_close "pos(disarmed)" "${TEST_POS_CMD_TOPIC}" "0.0,0.0"
 
 echo "[INFO] Case 2: AIR + dry -> neutral wings"
 pub_wet_burst false
 pub_mode_burst 1
 wait_list_close "wing(air)" "${WING_CMD_TOPIC}" "0.0,0.0"
-wait_list_close "pos(air)" "${TEST_POS_CMD_TOPIC}" "0.0,0.0,0.0,0.0"
+wait_list_close "pos(air)" "${TEST_POS_CMD_TOPIC}" "0.0,0.0"
 
 echo "[INFO] Case 3: AIR + wet -> TRANSITION command"
 pub_mode_burst 1
 pub_wet_burst true
 wait_list_close "wing(transition)" "${WING_CMD_TOPIC}" "-0.8,0.8"
-wait_list_close "pos(transition)" "${TEST_POS_CMD_TOPIC}" "-0.8,0.8,0.0,0.0"
+wait_list_close "pos(transition)" "${TEST_POS_CMD_TOPIC}" "-0.8,0.8"
 
 echo "[INFO] Case 4: transition elapsed + wet -> UNDERWATER command"
 sleep "$(sleep_transition_elapsed)"
 wait_list_close "wing(underwater)" "${WING_CMD_TOPIC}" "-1.2,1.2"
-wait_list_close "pos(underwater)" "${TEST_POS_CMD_TOPIC}" "-1.2,1.2,0.0,0.0"
+wait_list_close "pos(underwater)" "${TEST_POS_CMD_TOPIC}" "-1.2,1.2"
 
 echo "[INFO] Case 5: allocator timeout after input stops -> neutral"
 kill "${STATE_PID}" 2>/dev/null || true
 wait "${STATE_PID}" 2>/dev/null || true
 STATE_PID=""
 sleep 1.1
-wait_list_close "pos(timeout-neutral)" "${TEST_POS_CMD_TOPIC}" "0.0,0.0,0.0,0.0"
+wait_list_close "pos(timeout-neutral)" "${TEST_POS_CMD_TOPIC}" "0.0,0.0"
 
 echo "[OK] Decision-control acceptance test passed."

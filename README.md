@@ -94,5 +94,5 @@ Expected result:
 
 ### Terminal B - Send one command test (optional)
 ```
-ros2 topic pub --once /position_controller/commands std_msgs/msg/Float64MultiArray "{data: [0.0, 0.0, 0.1, -0.1]}"
+ros2 topic pub --once /position_controller/commands std_msgs/msg/Float64MultiArray "{data: [0.0, 0.0]}"
 ```

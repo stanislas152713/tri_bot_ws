@@ -25,7 +25,7 @@ public:
       "wing_fold_cmd", 10,
       std::bind(&TvcAllocatorNode::on_wing_command, this, std::placeholders::_1));
 
-    // Output contract: [left_wing, right_wing, tvc_pitch, tvc_yaw].
+    // Output contract: [left_wing, right_wing] -> position_controller joint order.
     position_cmd_pub_ = create_publisher<std_msgs::msg::Float64MultiArray>(
       output_topic_, 10);
 
@@ -35,12 +35,12 @@ public:
       std::bind(&TvcAllocatorNode::on_publish_timer, this));
 
     // Start in neutral state.
-    current_cmd_ = {0.0, 0.0, 0.0, 0.0};
+    current_cmd_ = {0.0, 0.0};
     last_cmd_time_ = now();
 
     RCLCPP_INFO(
       get_logger(),
-      "tvc_allocator started: topic=%s, timeout=%.2fs, rate=%.1fHz (TVC locked at 0 for V1)",
+      "tvc_allocator started: topic=%s, timeout=%.2fs, rate=%.1fHz (wings-only command vector)",
       output_topic_.c_str(), timeout_seconds_, publish_rate_hz_);
   }
 
@@ -65,10 +65,6 @@ private:
     current_cmd_[0] = clamp(static_cast<double>(msg->data[0]), -1.57, 0.0);
     current_cmd_[1] = clamp(static_cast<double>(msg->data[1]), 0.0, 1.57);
 
-    // V1 MVP: keep TVC locked at neutral.
-    current_cmd_[2] = 0.0;
-    current_cmd_[3] = 0.0;
-
     last_cmd_time_ = now();
   }
 
@@ -77,11 +73,11 @@ private:
     const auto elapsed = (now() - last_cmd_time_).seconds();
     if (elapsed > timeout_seconds_) {
       // Safety fallback: no recent command => neutral.
-      current_cmd_ = {0.0, 0.0, 0.0, 0.0};
+      current_cmd_ = {0.0, 0.0};
     }
 
     std_msgs::msg::Float64MultiArray out;
-    out.data = {current_cmd_[0], current_cmd_[1], current_cmd_[2], current_cmd_[3]};
+    out.data = {current_cmd_[0], current_cmd_[1]};
     position_cmd_pub_->publish(out);
   }
 
@@ -89,7 +85,7 @@ private:
   rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr position_cmd_pub_;
   rclcpp::TimerBase::SharedPtr publish_timer_;
 
-  std::array<double, 4> current_cmd_{};
+  std::array<double, 2> current_cmd_{};
   rclcpp::Time last_cmd_time_;
   std::chrono::duration<double> publish_period_{};
   double timeout_seconds_{0.5};
